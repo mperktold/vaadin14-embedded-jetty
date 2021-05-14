@@ -10,16 +10,16 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <failOnMissingWebXml>false</failOnMissingWebXml>
 
-        <vaadin.version>14.5.4</vaadin.version>
+        <vaadin.version>19.0.7</vaadin.version>
         <!-- don't use Jetty 10 - requres Java 11
 	     don't use Jetty 11+ - uses jakarta.Servlet instead of javax.Servlet which makes it incompatible with Vaadin -->
-        <jetty.version>9.4.36.v20210114</jetty.version>
+        <jetty.version>10.0.2</jetty.version>
     </properties>
 
     <repositories>
@@ -91,29 +91,13 @@
         <!-- Embedded Jetty dependencies -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-continuation</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
+            <artifactId>websocket-javax-server</artifactId>
             <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>javax-websocket-server-impl</artifactId>
-            <version>${jetty.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.websocket</groupId>
-                    <artifactId>javax.websocket-client-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- Fast Vaadin unit-testing with Karibu-Testing: https://github.com/mvysny/karibu-testing -->
@@ -141,8 +125,9 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>3.8.1</version>
             </plugin>
 
             <!--
@@ -166,8 +151,9 @@
 
             <!-- creates both the "zip" and "uberjar" distributions -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -192,6 +178,7 @@
 
             <!-- Need at least 2.22.0 to support JUnit 5 -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
             </plugin>
@@ -219,6 +206,7 @@
                 <dependency>
                     <groupId>com.vaadin</groupId>
                     <artifactId>flow-server-production-mode</artifactId>
+                    <version>6.0.8</version>
                 </dependency>
             </dependencies>
 
