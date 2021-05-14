@@ -6,8 +6,19 @@ import com.vaadin.flow.server.startup.ServletContextListeners;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http2.HTTP2Cipher;
+import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
+import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +59,10 @@ public final class Main {
         if (args.length >= 1) {
             port = Integer.parseInt(args[0]);
         }
-        server = new Server(port);
+
+        server = new Server();
+        server.addConnector(httpConnector(port));
+        server.addConnector(httpsConnector());
         server.setHandler(context);
         server.start();
 
@@ -56,6 +70,40 @@ public final class Main {
         "Please open http://localhost:" + port + " in your browser\n\n" +
         "If you see the 'Unable to determine mode of operation' exception, just kill me and run `mvn -C clean package`\n\n" +
         "=================================================\n\n");
+    }
+
+    private static ServerConnector httpConnector(int port) {
+        var httpConfig = new HttpConfiguration();
+        var httpConnector = new ServerConnector(server, new HttpConnectionFactory(httpConfig), new HTTP2CServerConnectionFactory(httpConfig));
+        httpConnector.setPort(port);
+        return httpConnector;
+    }
+
+    private static ServerConnector httpsConnector() {
+        var httpsConfig = new HttpConfiguration();
+        httpsConfig.setSecureScheme("https");
+        httpsConfig.setSecurePort(8443);
+        httpsConfig.addCustomizer(new SecureRequestCustomizer(false));
+        var h2 = new HTTP2ServerConnectionFactory(httpsConfig);
+
+        var alpn = new ALPNServerConnectionFactory();
+        alpn.setDefaultProtocol(HttpVersion.HTTP_1_1.asString());
+
+        var ssl = new SslConnectionFactory(serverSslContextFactory(), alpn.getProtocol());
+
+        var httpsConnector = new ServerConnector(server, ssl, alpn, h2, new HttpConnectionFactory(httpsConfig));
+        httpsConnector.setPort(8443);
+        return httpsConnector;
+    }
+
+    private static SslContextFactory.Server serverSslContextFactory() {
+        var factory = new SslContextFactory.Server();
+        factory.setKeyStorePath("./keystore.pfx");
+        factory.setKeyStorePassword("OBF:1z0f1vu91vv11z0f");
+        factory.setKeyStoreType("PKCS12");
+        factory.setCipherComparator(HTTP2Cipher.COMPARATOR);
+        factory.setProvider("Conscrypt");
+        return factory;
     }
 
     public static void stop() throws Exception {
